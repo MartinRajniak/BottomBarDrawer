@@ -628,12 +628,16 @@ public class BottomBarDrawerLayout extends ViewGroup {
 				return false;
 			}
 			
-			final View drawerView = findDrawerView();
-			final LayoutParams lp = (LayoutParams) drawerView.getLayoutParams();
+			if(!isVisiblePartTouched(touchedView)){
+				// Ignore tap that is outside of bottom bar region (visible part)
+				return false;
+			}
+			
+			final LayoutParams lp = (LayoutParams) touchedView.getLayoutParams();
 			if (lp.knownOpen) {
-				closeDrawerView(drawerView);
+				closeDrawerView(touchedView);
 			} else {
-				openDrawerView(drawerView);
+				openDrawerView(touchedView);
 			}
 			break;
 		}
@@ -714,17 +718,18 @@ public class BottomBarDrawerLayout extends ViewGroup {
 		return null;
 	}
 
-	private View findDrawerView() {
-		for (int i = 0, childCount = getChildCount(); i < childCount; i++) {
-			final View child = getChildAt(i);
-			if (isContentView(child)) {
-				continue;
-			}
-
-			return child;
+	private boolean isVisiblePartTouched(View touchedView) {
+		if(isContentView(touchedView)){
+			throw new IllegalArgumentException("View " + touchedView + " is not a Drawer view.");
 		}
+		
+		final float touchedViewY = mInitialMotionY - touchedView.getTop(); 
 
-		throw new IllegalStateException("No drawer view found");
+		if(touchedViewY < mVisiblePartHeight){
+			return true;
+		}
+		
+		return false;
 	}
 
 	@Override
