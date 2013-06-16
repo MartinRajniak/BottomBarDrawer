@@ -581,10 +581,9 @@ public class BottomBarDrawerLayout extends ViewGroup {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
-		final int action = ev.getAction();
-		
 		mDragger.processTouchEvent(ev);
-		
+
+		final int action = ev.getAction();
 		switch (action & MotionEventCompat.ACTION_MASK) {
 		case MotionEvent.ACTION_DOWN: {
 			final float x = ev.getX();
@@ -593,9 +592,6 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			mInitialMotionY = y;
 			mChildrenCanceledTouch = false;
 			mAlwaysInTapRegion = true;
-			// TODO: Find another way how to set minimum drag distance before view starts to move. 
-			// Aborting dragging view for the time being is not a perfect solution.
-			mDragger.abort();
 			break;
 		}
 		case MotionEvent.ACTION_MOVE: {
@@ -606,10 +602,6 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			final int distance = (dx * dx) + (dy * dy);
 			if (distance > mTouchSlopSquare) {
 				mAlwaysInTapRegion = false;
-			}else{
-				// TODO: Find another way how to set minimum drag distance before view starts to move. 
-				// Aborting dragging view for the time being is not a perfect solution.
-				mDragger.abort();
 			}
 			
 			return false;
