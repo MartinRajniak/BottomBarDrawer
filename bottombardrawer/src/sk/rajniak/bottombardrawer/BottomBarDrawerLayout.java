@@ -885,10 +885,12 @@ public class BottomBarDrawerLayout extends ViewGroup {
 		@Override
 		public int clampViewPositionVertical(View child, int top, int dy) {
 			final int height = getHeight();
-			final int limit = height - mVisiblePartHeight;
+			final int bottomLimit = height - mVisiblePartHeight;
 			
-			if(top > limit){
-				top = limit;
+			if(top > bottomLimit){
+				top = bottomLimit;
+			} else if(top < 0){
+				top = 0;
 			}
 			
 			return top;
