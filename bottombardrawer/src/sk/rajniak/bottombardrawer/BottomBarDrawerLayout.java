@@ -86,7 +86,6 @@ public class BottomBarDrawerLayout extends ViewGroup {
 	private int mDrawerState;
 	private boolean mInLayout;
 	private boolean mFirstLayout = true;
-	private boolean mChildrenCanceledTouch;
 
 	private final int mVisiblePartHeight;
 	private boolean mAlwaysInTapRegion;
@@ -98,6 +97,8 @@ public class BottomBarDrawerLayout extends ViewGroup {
 	private Drawable mShadow;
 
 	private DrawerListener mListener;
+
+	private boolean mBottomBarTouched;
 
 	/**
 	 * Listener for monitoring events about drawer.
@@ -272,7 +273,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
         }
         return ((LayoutParams) drawer.getLayoutParams()).knownOpen;
     }
-    
+
 	/**
  	 * Should be called whenever a ViewDragHelper's state changes.
 	 */
@@ -551,32 +552,31 @@ public class BottomBarDrawerLayout extends ViewGroup {
 	
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		final int action = MotionEventCompat.getActionMasked(ev);
-
-		final boolean interceptForDrag = mDragger.shouldInterceptTouchEvent(ev);
-
+		boolean interceptForDrag = mDragger.shouldInterceptTouchEvent(ev);
 		boolean interceptForTap = false;
-
+		
+		final int action = MotionEventCompat.getActionMasked(ev);
 		switch (action) {
 		case MotionEvent.ACTION_DOWN: {
 			final float x = ev.getX();
 			final float y = ev.getY();
 			mInitialMotionX = x;
 			mInitialMotionY = y;
-			if (mContentScrimOpacity > 0 && isContentView(mDragger.findTopChildUnder((int) x, (int) y))) {
+			final View touchedView = mDragger.findTopChildUnder((int) x, (int) y);
+			if(!isContentView(touchedView) && isBottomBarTouched(touchedView, ev)){
+				mBottomBarTouched = true; 
 				interceptForTap = true;
-			}
-			mChildrenCanceledTouch = false;
+			}				
+			
 			break;
 		}
-
-		case MotionEvent.ACTION_CANCEL:
-		case MotionEvent.ACTION_UP: {
-			mChildrenCanceledTouch = false;
 		}
+		
+		if(interceptForDrag && !mBottomBarTouched){
+			interceptForDrag = false;
 		}
 
-		return interceptForDrag || interceptForTap || mChildrenCanceledTouch;
+		return interceptForDrag || interceptForTap;
 	}
 
 	@Override
@@ -590,7 +590,6 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			final float y = ev.getY();
 			mInitialMotionX = x;
 			mInitialMotionY = y;
-			mChildrenCanceledTouch = false;
 			mAlwaysInTapRegion = true;
 			break;
 		}
@@ -615,13 +614,15 @@ public class BottomBarDrawerLayout extends ViewGroup {
 				return false;
 			}
 
-			if(!mAlwaysInTapRegion){
-				// Do not continue if this is a side effect of drag
+			if(!mBottomBarTouched){
+				// Ignore tap that is outside of bottom bar region (visible part)
 				return false;
 			}
+
+			mBottomBarTouched = false;
 			
-			if(!isVisiblePartTouched(touchedView)){
-				// Ignore tap that is outside of bottom bar region (visible part)
+			if(!mAlwaysInTapRegion){
+				// Do not continue if this is a side effect of drag
 				return false;
 			}
 			
@@ -631,17 +632,18 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			} else {
 				openDrawerView(touchedView);
 			}
+			
 			break;
 		}
 		case MotionEvent.ACTION_CANCEL: {
-			mChildrenCanceledTouch = false;
+			mBottomBarTouched = false;
 			break;
 		}
 		}
 
 		return true;
 	}
-
+	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && hasVisibleDrawer()) {
@@ -710,12 +712,13 @@ public class BottomBarDrawerLayout extends ViewGroup {
 		return null;
 	}
 
-	private boolean isVisiblePartTouched(View touchedView) {
+	private boolean isBottomBarTouched(View touchedView, MotionEvent ev) {
 		if(isContentView(touchedView)){
 			throw new IllegalArgumentException("View " + touchedView + " is not a Drawer view.");
 		}
 		
-		final float touchedViewY = mInitialMotionY - touchedView.getTop(); 
+		final float touchedY = ev.getY();
+		final float touchedViewY = touchedY - touchedView.getTop(); 
 
 		if(touchedViewY < mVisiblePartHeight){
 			return true;

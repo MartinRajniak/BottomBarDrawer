@@ -23,7 +23,7 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onDrawerStateChanged(int newState) {
-
+ 
 			}
 
 			@Override
