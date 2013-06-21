@@ -564,10 +564,14 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			mInitialMotionX = x;
 			mInitialMotionY = y;
 			final View touchedView = mDragger.findTopChildUnder((int) x, (int) y);
-			if(!isContentView(touchedView) && isBottomBarTouched(touchedView, ev)){
+			if (isContentView(touchedView)){
+				if(mContentScrimOpacity > 0){
+					interceptForTap = true;
+				}
+			} else if (isBottomBarTouched(touchedView, ev)){
 				mBottomBarTouched = true; 
 				interceptForTap = true;
-			}				
+			}
 			
 			break;
 		}
@@ -611,27 +615,33 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			final float y = ev.getY();
 			final View touchedView = mDragger.findTopChildUnder((int) x, (int) y);
 
-			if (touchedView == null || isContentView(touchedView)) {
-				return false;
-			}
-
-			if(!mBottomBarTouched){
-				// Ignore tap that is outside of bottom bar region (visible part)
-				return false;
-			}
-
-			mBottomBarTouched = false;
-			
-			if(!mAlwaysInTapRegion){
-				// Do not continue if this is a side effect of drag
+			if (touchedView == null) {
 				return false;
 			}
 			
-			final LayoutParams lp = (LayoutParams) touchedView.getLayoutParams();
-			if (lp.knownOpen) {
-				closeDrawerView(touchedView);
+			if(isContentView(touchedView)){
+				if(mContentScrimOpacity > 0){
+					closeDrawers();
+				}
 			} else {
-				openDrawerView(touchedView);
+				if(!mBottomBarTouched){
+					// Ignore tap that is outside of bottom bar region (visible part)
+					return false;
+				}
+
+				mBottomBarTouched = false;
+				
+				if(!mAlwaysInTapRegion){
+					// Do not continue if this is a side effect of drag
+					return false;
+				}
+				
+				final LayoutParams lp = (LayoutParams) touchedView.getLayoutParams();
+				if (lp.knownOpen) {
+					closeDrawerView(touchedView);
+				} else {
+					openDrawerView(touchedView);
+				}
 			}
 			
 			break;
@@ -664,6 +674,13 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			return visibleDrawer != null;
 		}
 		return super.onKeyUp(keyCode, event);
+	}
+	
+	private void closeDrawers() {
+		final View drawerView = findDrawer();
+		if(drawerView != null){
+			closeDrawerView(drawerView);
+		}
 	}
 
 	private void closeDrawerView(View drawerView) {
