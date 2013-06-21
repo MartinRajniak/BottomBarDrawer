@@ -441,16 +441,17 @@ public class BottomBarDrawerLayout extends ViewGroup {
 				final View drawerView = findDrawer();
 				if(drawerView != null){
 					final LayoutParams drawerLayoutParams = (LayoutParams) drawerView.getLayoutParams();
-					if(drawerLayoutParams.onScreen == 1.f){
+					if(drawerLayoutParams.onScreen == 1.f
+							&& drawerView.getMeasuredHeight() == getMeasuredHeight()){
 						child.setVisibility(INVISIBLE);
 					}
 				}
 			} else if (lp.onScreen == 0) { // Drawer view - hidden
-				final int top = child.getMeasuredHeight() - mVisiblePartHeight;
+				final int top = getMeasuredHeight() - mVisiblePartHeight;
 
 				child.layout(lp.leftMargin, top, lp.leftMargin + child.getMeasuredWidth(), top + child.getMeasuredHeight());
 			} else { // Drawer view - displayed
-				final int top = child.getMeasuredHeight() - mVisiblePartHeight - (int) ((child.getMeasuredHeight() - mVisiblePartHeight) * lp.onScreen);
+				final int top = getMeasuredHeight() - mVisiblePartHeight - (int) ((child.getMeasuredHeight() - mVisiblePartHeight) * lp.onScreen);
 
 				child.layout(lp.leftMargin, top, lp.leftMargin + child.getMeasuredWidth(), top + child.getMeasuredHeight());
 			}
@@ -519,7 +520,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			final int imag = (int) (baseAlpha * mContentScrimOpacity);
 			final int color = imag << 24 | (mContentScrimColor & 0xffffff);
 			mContentScrimPaint.setColor(color);
-
+			
 			canvas.drawRect(0, clipTop, getWidth(), clipBottom, mContentScrimPaint);
 		} else if (mShadow != null) {
 			final int shadowHeight = mShadow.getIntrinsicHeight();
@@ -675,7 +676,8 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			lp.onScreen = 0.f;
 			lp.knownOpen = false;
 		} else {
-			mDragger.smoothSlideViewTo(drawerView, drawerView.getLeft(), drawerView.getHeight() - mVisiblePartHeight);
+			final int top = getHeight() - mVisiblePartHeight;
+			mDragger.smoothSlideViewTo(drawerView, drawerView.getLeft(), top);
 		}
 
 		invalidate();
@@ -691,7 +693,8 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			lp.onScreen = 1.f;
 			lp.knownOpen = true;
 		} else {
-			mDragger.smoothSlideViewTo(drawerView, drawerView.getLeft(), 0);
+			final int top = getHeight() - drawerView.getHeight();
+			mDragger.smoothSlideViewTo(drawerView, drawerView.getLeft(), top);
 		}
 
 		invalidate();
@@ -829,16 +832,19 @@ public class BottomBarDrawerLayout extends ViewGroup {
 		@Override
 		public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
 			float offset;
-			final int childHeight = changedView.getHeight() - mVisiblePartHeight;
-			final int height = getHeight();
-
+			final int childHeight = changedView.getHeight();
+			final int openedDrawerTop = getHeight() - childHeight;
+			
 			// This reverses the positioning shown in onLayout.
-			offset = (float) (height - (top + mVisiblePartHeight)) / childHeight;
+			offset = 1 - ((float)(top - openedDrawerTop) / (childHeight - mVisiblePartHeight));
 
 			setDrawerViewOffset(changedView, offset);
 
-			View contentView = findContent();
-			contentView.setVisibility(offset == 1 ? INVISIBLE : VISIBLE);
+			final View contentView = findContent();
+			final boolean isContentViewVisible = offset == 1.f
+					&& changedView.getMeasuredHeight() == getMeasuredHeight();
+			
+			contentView.setVisibility(isContentViewVisible ? INVISIBLE : VISIBLE);
 
 			invalidate();
 		}
@@ -879,13 +885,14 @@ public class BottomBarDrawerLayout extends ViewGroup {
 
 		@Override
 		public int clampViewPositionVertical(View child, int top, int dy) {
-			final int height = getHeight();
-			final int bottomLimit = height - mVisiblePartHeight;
+			final int childHeight = child.getHeight();
+			final int bottomLimit = getHeight() - mVisiblePartHeight;
+			final int topLimit = getHeight() - childHeight;
 			
 			if(top > bottomLimit){
 				top = bottomLimit;
-			} else if(top < 0){
-				top = 0;
+			} else if(top < topLimit){
+				top = topLimit;
 			}
 			
 			return top;
