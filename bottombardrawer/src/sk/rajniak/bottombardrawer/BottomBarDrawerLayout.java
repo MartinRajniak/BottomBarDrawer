@@ -242,15 +242,21 @@ public class BottomBarDrawerLayout extends ViewGroup {
 	}
 	
 	/**
-	 * Check if a given drawer view is currently visible on-screen. The drawer
+	 * Check if the drawer view is currently visible on-screen. The drawer
 	 * may be dragged or fully extended.
 	 * 
-	 * @param drawer
-	 *            Drawer view to check
-	 * @return true if the given drawer is visible on-screen
-	 * @see #isDrawerOpen(android.view.View)
+	 * @return true if the drawer is visible on-screen
+	 * @see #isDrawerOpen()
 	 */
-	public boolean isDrawerVisible(View drawer) {
+	public boolean isDrawerVisible(){
+		final View drawer = findDrawer();
+		if(drawer != null && isDrawerVisible(drawer)){
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isDrawerVisible(View drawer) {
 		if (isContentView(drawer)) {
 			throw new IllegalArgumentException("View " + drawer + " is not a drawer");
 		}
@@ -258,16 +264,23 @@ public class BottomBarDrawerLayout extends ViewGroup {
 	}
 
     /**
-     * Check if the given drawer view is currently in an open state.
+     * Check if the drawer view is currently in an open state.
      * To be considered "open" the drawer must have settled into its fully
      * visible state. To check for partial visibility use
-     * {@link #isDrawerVisible(android.view.View)}.
+     * {@link #isDrawerVisible()}.
      *
-     * @param drawer Drawer view to check
-     * @return true if the given drawer view is in an open state
-     * @see #isDrawerVisible(android.view.View)
+     * @return true if the drawer view is in an open state
+     * @see #isDrawerVisible()
      */
-    public boolean isDrawerOpen(View drawer) {
+	public boolean isDrawerOpen(){
+		final View drawer = findDrawer();
+		if(drawer != null && isDrawerOpen(drawer)){
+			return true;
+		}
+		return false;
+	}
+	
+    private boolean isDrawerOpen(View drawer) {
         if (isContentView(drawer)) {
             throw new IllegalArgumentException("View " + drawer + " is not a drawer");
         }
@@ -570,7 +583,6 @@ public class BottomBarDrawerLayout extends ViewGroup {
 				}
 			} else if (isBottomBarTouched(touchedView, ev)){
 				mBottomBarTouched = true; 
-				interceptForTap = true;
 			}
 			
 			break;
@@ -621,7 +633,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			
 			if(isContentView(touchedView)){
 				if(mContentScrimOpacity > 0){
-					closeDrawers();
+					closeDrawer();
 				}
 			} else {
 				if(!mBottomBarTouched){
@@ -676,7 +688,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
 		return super.onKeyUp(keyCode, event);
 	}
 	
-	private void closeDrawers() {
+	public void closeDrawer() {
 		final View drawerView = findDrawer();
 		if(drawerView != null){
 			closeDrawerView(drawerView);
