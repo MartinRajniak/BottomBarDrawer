@@ -426,7 +426,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
                 final int contentWidthSpec = MeasureSpec.makeMeasureSpec(
                         widthSize - lp.leftMargin - lp.rightMargin, MeasureSpec.EXACTLY);
                 final int contentHeightSpec = MeasureSpec.makeMeasureSpec(
-                        heightSize - lp.topMargin - lp.bottomMargin, MeasureSpec.EXACTLY);
+                        heightSize - lp.topMargin - lp.bottomMargin - mVisiblePartHeight, MeasureSpec.EXACTLY);
                 child.measure(contentWidthSpec, contentHeightSpec);
             } else {
                 final int drawerWidthSpec = getChildMeasureSpec(widthMeasureSpec,
@@ -449,7 +449,7 @@ public class BottomBarDrawerLayout extends ViewGroup {
 			final LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
 			if (isContentView(child)) {
-				child.layout(lp.leftMargin, lp.topMargin, lp.leftMargin + child.getMeasuredWidth(), lp.topMargin + child.getMeasuredHeight() - mVisiblePartHeight);
+				child.layout(lp.leftMargin, lp.topMargin, lp.leftMargin + child.getMeasuredWidth(), lp.topMargin + child.getMeasuredHeight());
 
 				final View drawerView = findDrawer();
 				if(drawerView != null){
